@@ -1,17 +1,22 @@
 ﻿"""Project endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import json
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from openai import AuthenticationError, RateLimitError
 from sqlalchemy.orm import Session
 
 from app.ai.llm_client import analyze_website
+from app.core.config import OPENAI_MODEL
 from app.db.session import get_db_session
 from app.models.project import Project
+from app.schemas.analysis import AnalysisResponse
 from app.schemas.project import (
     ProjectAnalysisResponse,
     ProjectCreate,
     ProjectResponse,
 )
+from app.services.analysis_service import AnalysisService
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
@@ -32,8 +37,12 @@ def create_project(payload: ProjectCreate, db: Session = Depends(get_db_session)
     return project
 
 
-@router.post("/{project_id}/analyze", response_model=ProjectAnalysisResponse)
-def analyze_project(project_id: int, db: Session = Depends(get_db_session)) -> ProjectAnalysisResponse:
+@router.post("/{project_id}/analyze", response_model=dict[str, int | str])
+def analyze_project(
+    project_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db_session),
+) -> dict[str, int | str]:
     """Analyze project website URL with LLM and return structured output."""
     project = db.get(Project, project_id)
     if project is None:
@@ -44,21 +53,22 @@ def analyze_project(project_id: int, db: Session = Depends(get_db_session)) -> P
             detail="Project client_url is missing.",
         )
 
-    try:
-        analysis = analyze_website(project.client_url)
-    except RateLimitError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded.",
-        ) from exc
-    except AuthenticationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication with AI provider failed.",
-        ) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(exc),
-        ) from exc
-    return ProjectAnalysisResponse(project_id=project.id, **analysis)
+    analysis_record = AnalysisService.create_analysis(db, project.id)
+
+    background_tasks.add_task(
+        AnalysisService.run_analysis,
+        analysis_record.id,
+    )
+    return {
+        "analysis_id": analysis_record.id,
+        "status": analysis_record.status,
+    }
+
+
+@router.get("/{project_id}/analyses", response_model=list[AnalysisResponse])
+def list_project_analyses(project_id: int, db: Session = Depends(get_db_session)) -> list[AnalysisResponse]:
+    """Return all analyses for a project ordered by newest first."""
+    project = db.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found.")
+    return AnalysisService.get_analyses_by_project_id(db, project_id)

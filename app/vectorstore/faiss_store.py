@@ -12,3 +12,15 @@ class FaissStore:
         """Placeholder similarity search."""
         _ = (vector, top_k)
         return []
+
+
+class FaissVectorStore:
+    """In-memory vector store placeholder."""
+
+    def __init__(self) -> None:
+        self.items: list[tuple[str, list[float]]] = []
+
+    def add_embeddings(self, chunks: list[str], embeddings: list[list[float]]) -> None:
+        """Store aligned chunks and embeddings in memory."""
+        for chunk, embedding in zip(chunks, embeddings, strict=False):
+            self.items.append((chunk, embedding))

@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.logging import setup_logging
 from app.db.init_db import init_db
-from app.routers import analytics, campaigns, health, projects
+from app.routers import analyses, analytics, campaigns, health, projects
 
 app = FastAPI(title=settings.app_name, version=settings.app_version)
 
@@ -19,5 +19,7 @@ def on_startup() -> None:
 
 app.include_router(health.router)
 app.include_router(campaigns.router)
+app.include_router(campaigns.history_router)
 app.include_router(projects.router)
 app.include_router(analytics.router)
+app.include_router(analyses.router)
