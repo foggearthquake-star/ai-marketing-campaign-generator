@@ -1,25 +1,21 @@
 ﻿# AI Campaign MVP
 
-Production-oriented MVP AI SaaS platform for agencies: website analysis -> campaign generation -> usage control in a single multi-tenant workspace.
+## English
+Production-oriented AI SaaS MVP for agencies: website analysis -> campaign generation -> usage/limits in one multi-tenant workspace.
 
-## Product Goal
+### Product Goal
 - Reduce campaign production cycle time for SMB agencies.
 - Keep generation pipeline transparent and auditable.
-- Provide stable API + frontend that can be shipped to real clients.
+- Provide stable API + frontend ready for real client pilots.
 
-## What This MVP Delivers
-- Multi-tenant architecture (`workspaces`, `memberships`, role model `owner/member`).
-- Auth + team access (`JWT`, register/login/me).
-- End-to-end pipeline:
-  - create project
-  - run analysis
-  - generate campaign versions
-  - compare campaigns
-  - track usage and limits
-- Async job orchestration with resilient local fallback in dev.
-- RU-first frontend dashboard for daily operations.
+### What This MVP Delivers
+- Multi-tenant model (`workspaces`, `memberships`, roles `owner/member`).
+- Auth and team access (`JWT`, register/login/me).
+- End-to-end flow: project -> analysis -> campaign -> compare -> usage/limits.
+- Async job orchestration with resilient local fallback in development.
+- RU-first operational dashboard on Next.js.
 
-## Architecture (DOE-style execution)
+### Architecture
 ```text
 Client Website URL
    -> Scraper
@@ -27,85 +23,33 @@ Client Website URL
    -> RAG Retrieval
    -> LLM Analysis (structured output)
    -> Campaign Orchestrator (multi-agent)
-   -> Evaluation/Comparison
-   -> Usage & Audit ledger
+   -> Evaluation / Comparison
+   -> Usage + Audit ledger
 ```
 
-## Engineering Highlights
-- Versioned API layer: `/api/v1/*` with backward-compatible legacy routes.
-- Workspace-scoped data isolation in routers/services.
-- Unified job model and polling (`queued | running | completed | failed`).
-- Request tracing (`request_id`), centralized error envelope, security headers, CORS, rate limiting.
-- Audit trail for critical actions and scraping policy disclaimer logging.
-- Stable frontend runtime mode (`next build + next start`) to avoid broken chunk issues in local demos.
+### Tech Stack (Used)
+- Backend: Python 3.13, FastAPI, SQLAlchemy, Pydantic, Uvicorn
+- AI/Data: OpenAI-compatible LLM API, Polza.ai, Embeddings, RAG, Multi-agent orchestration
+- Queue/Infra: Celery + Redis (prod path), local fallback (`RUN_TASKS_LOCALLY=1`), JWT, Passlib
+- Frontend: Next.js 15, React 19, TypeScript, Node.js
+- Testing: Pytest + E2E smoke checks
 
-## Tech Stack (Used)
-### Backend
-- Python 3.13
-- FastAPI
-- SQLAlchemy
-- Pydantic
-- Uvicorn
+### Core API
+- Auth: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me`
+- Workspaces: `GET/POST /api/v1/workspaces`, `POST /api/v1/workspaces/{id}/members`
+- Projects/Analysis: `GET/POST /api/v1/projects`, `POST /api/v1/projects/{id}/analyze`, `GET /api/v1/projects/{id}/analyses`, `GET /api/v1/analyses/{id}`
+- Campaigns: `POST /api/v1/campaigns/{analysis_id}`, `GET /api/v1/campaigns/{id}`, `GET /api/v1/campaigns/{id}/compare/{other_id}`
+- Usage/Billing controls: `GET /api/v1/usage`, `GET /api/v1/plan`, `GET /api/v1/limits`
 
-### AI / Data
-- LLM API (OpenAI-compatible)
-- Polza.ai integration (OpenAI-compatible endpoint)
-- Embeddings + RAG retrieval pipeline
-- Multi-agent orchestration for campaign generation
-
-### Queue / Infra
-- Celery + Redis (production path)
-- Local background fallback (dev reliability)
-- JWT auth (`python-jose`)
-- Passlib (password hashing)
-
-### Frontend
-- Next.js 15
-- React 19
-- TypeScript
-- Node.js runtime
-
-### Testing
-- Pytest
-- E2E smoke checks for critical path
-
-## API Surface (Core)
-### Auth
-- `POST /api/v1/auth/register`
-- `POST /api/v1/auth/login`
-- `GET /api/v1/auth/me`
-
-### Workspaces
-- `GET /api/v1/workspaces`
-- `POST /api/v1/workspaces`
-- `POST /api/v1/workspaces/{id}/members`
-
-### Projects / Analysis
-- `GET /api/v1/projects?workspace_id=...`
-- `POST /api/v1/projects`
-- `POST /api/v1/projects/{id}/analyze?workspace_id=...`
-- `GET /api/v1/projects/{id}/analyses?workspace_id=...`
-- `GET /api/v1/analyses/{id}?workspace_id=...`
-
-### Campaigns
-- `POST /api/v1/campaigns/{analysis_id}?workspace_id=...`
-- `GET /api/v1/campaigns/{id}?workspace_id=...`
-- `GET /api/v1/campaigns/{id}/compare/{other_id}?workspace_id=...`
-
-### Usage / Billing Controls
-- `GET /api/v1/usage?workspace_id=...`
-- `GET /api/v1/plan?workspace_id=...`
-- `GET /api/v1/limits?workspace_id=...`
-
-## Local Run
-## 1) Backend
+### Local Run
+#### Backend
 ```bash
 pip install -r requirements.txt
 cp .env.example .env
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-## 2) Frontend
+#### Frontend
 ```bash
 cd frontend
 npm install
@@ -113,24 +57,85 @@ npm run build
 npm run start
 ```
 
-Frontend URL: `http://127.0.0.1:3000`
-Backend URL: `http://127.0.0.1:8000`
+- Frontend: `http://127.0.0.1:3000`
+- Backend: `http://127.0.0.1:8000`
 
-## Environment Notes
-- For Polza.ai use OpenAI-compatible config in `.env`:
+### Environment Notes
+- Polza.ai config:
   - `OPENAI_API_KEY=pza_...`
   - `OPENAI_BASE_URL=https://polza.ai/api/v1`
-- For local reliability:
+- Local queue reliability:
   - `RUN_TASKS_LOCALLY=1`
 
-## MVP Acceptance Path
-1. Register user + workspace.
-2. Create project with client URL.
-3. Run analysis and wait for `success`.
-4. Generate campaign and wait for `completed`.
-5. Open usage/plan/limits and verify metrics update.
+### Troubleshooting
+- `Cannot find module './xxx.js'` in frontend:
+  1. Stop Node processes
+  2. Remove `frontend/.next`
+  3. Run `npm run build && npm run start`
+- `Нет соединения с API`:
+  1. Check backend health `http://127.0.0.1:8000/health`
+  2. Ensure frontend env uses `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`
+- Analysis stuck in `queued` locally:
+  1. Set `RUN_TASKS_LOCALLY=1`
+  2. Restart backend
 
-## Current Status
-- Final MVP is operational.
-- Backend + frontend validated on critical flow.
-- Repository includes production-shaped architecture with clear next step to deploy.
+### Status
+Final MVP is operational and validated on critical path.
+
+---
+
+## Русский
+Production-ready MVP AI SaaS для агентств: анализ сайта -> генерация кампаний -> контроль usage/лимитов в одном multi-tenant workspace.
+
+### Цель продукта
+- Сократить цикл подготовки кампаний для SMB-агентств.
+- Сделать генерацию прозрачной и управляемой.
+- Дать стабильный backend+frontend для пилотов с реальными клиентами.
+
+### Что уже реализовано
+- Multi-tenant модель (`workspaces`, `memberships`, роли `owner/member`).
+- Авторизация и командный доступ (`JWT`, register/login/me).
+- Сквозной процесс: проект -> анализ -> кампания -> сравнение -> usage/лимиты.
+- Асинхронные задачи с надежным локальным fallback в dev.
+- RU-first интерфейс операционной работы на Next.js.
+
+### Как запустить локально
+#### Backend
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+#### Frontend
+```bash
+cd frontend
+npm install
+npm run build
+npm run start
+```
+
+- Frontend: `http://127.0.0.1:3000`
+- Backend: `http://127.0.0.1:8000`
+
+### Важные env
+- Для Polza.ai:
+  - `OPENAI_API_KEY=pza_...`
+  - `OPENAI_BASE_URL=https://polza.ai/api/v1`
+- Для стабильного локального выполнения задач:
+  - `RUN_TASKS_LOCALLY=1`
+
+### Частые проблемы
+- `Cannot find module './xxx.js'`:
+  1. Остановить Node
+  2. Удалить `frontend/.next`
+  3. Запустить `npm run build && npm run start`
+- Нет связи фронта с API:
+  1. Проверить `http://127.0.0.1:8000/health`
+  2. Проверить `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000`
+- Анализ зависает в `queued`:
+  1. Включить `RUN_TASKS_LOCALLY=1`
+  2. Перезапустить backend
+
+### Статус
+Финальный MVP готов и проверен на критическом пути.
