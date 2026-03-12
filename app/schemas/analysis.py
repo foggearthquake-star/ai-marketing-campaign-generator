@@ -39,3 +39,16 @@ class AnalysisResponse(BaseModel):
     cost: float | None
     created_at: datetime
     updated_at: datetime
+
+
+class AnalysisListItemResponse(BaseModel):
+    """Lightweight analysis schema for list endpoints."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    project_id: int
+    status: str
+    error_message: str | None
+    created_at: datetime
+    updated_at: datetime

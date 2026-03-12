@@ -10,7 +10,7 @@ from app.ai.llm_client import analyze_website
 from app.core.config import OPENAI_MODEL
 from app.db.session import get_db_session
 from app.models.project import Project
-from app.schemas.analysis import AnalysisResponse
+from app.schemas.analysis import AnalysisListItemResponse
 from app.schemas.project import (
     ProjectAnalysisResponse,
     ProjectCreate,
@@ -65,8 +65,8 @@ def analyze_project(
     }
 
 
-@router.get("/{project_id}/analyses", response_model=list[AnalysisResponse])
-def list_project_analyses(project_id: int, db: Session = Depends(get_db_session)) -> list[AnalysisResponse]:
+@router.get("/{project_id}/analyses", response_model=list[AnalysisListItemResponse])
+def list_project_analyses(project_id: int, db: Session = Depends(get_db_session)) -> list[AnalysisListItemResponse]:
     """Return all analyses for a project ordered by newest first."""
     project = db.get(Project, project_id)
     if project is None:

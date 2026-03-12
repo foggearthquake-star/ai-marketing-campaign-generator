@@ -1,0 +1,36 @@
+<svg width="960" height="640" viewBox="0 0 960 640" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(486 274) rotate(90) scale(320 420)">
+      <stop stop-color="#F8F4EA"/>
+      <stop offset="1" stop-color="#E9E0D0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="218" y1="110" x2="742" y2="534" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7D9D73"/>
+      <stop offset="1" stop-color="#B6CB98"/>
+    </linearGradient>
+  </defs>
+  <rect width="960" height="640" rx="26" fill="url(#bg)"/>
+
+  <circle cx="480" cy="320" r="220" stroke="url(#ring)" stroke-width="30"/>
+  <circle cx="480" cy="320" r="158" stroke="#D0DFC0" stroke-width="22"/>
+  <circle cx="480" cy="320" r="102" stroke="#E1EBD2" stroke-width="20"/>
+
+  <circle cx="480" cy="320" r="24" fill="#6F8F66"/>
+  <circle cx="480" cy="320" r="10" fill="#EFF5E4"/>
+
+  <g fill="#7B9A6F">
+    <circle cx="700" cy="320" r="11"/>
+    <circle cx="260" cy="320" r="11"/>
+    <circle cx="480" cy="100" r="11"/>
+    <circle cx="480" cy="540" r="11"/>
+  </g>
+
+  <path d="M480 320L700 320" stroke="#89A97A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M480 320L260 320" stroke="#89A97A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M480 320L480 100" stroke="#89A97A" stroke-width="4" stroke-linecap="round"/>
+  <path d="M480 320L480 540" stroke="#89A97A" stroke-width="4" stroke-linecap="round"/>
+
+  <rect x="154" y="498" width="210" height="74" rx="16" fill="#FAF7EF" stroke="#D7C8AE"/>
+  <rect x="398" y="498" width="164" height="74" rx="16" fill="#FAF7EF" stroke="#D7C8AE"/>
+  <rect x="596" y="498" width="210" height="74" rx="16" fill="#FAF7EF" stroke="#D7C8AE"/>
+</svg>
